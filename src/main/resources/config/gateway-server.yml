@@ -1,0 +1,68 @@
+server:
+  port: 8072
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://localhost:8070/eureka/
+
+spring:
+  zipkin:
+    baseUrl: http://zipkin:9411
+  sleuth:
+    sampler:
+      percentage: 1
+  cloud:
+    loadbalancer.ribbon.enabled: false
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        corsConfigurations:
+          "[/**]":
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+      routes:
+        - id: ms-device
+          uri: lb://ms-device
+          predicates:
+            - Path=/device/**
+          filters:
+            - RewritePath=/device/(?<path>.*), /$\{path}
+            - RemoveRequestHeader= Cookie,Set-Cookie
+        - id: ms-farmer
+          uri: lb://ms-farmer
+          predicates:
+            - Path=/farmer/**
+          filters:
+            - RewritePath=/farmer/(?<path>.*), /$\{path}
+            - RemoveRequestHeader= Cookie,Set-Cookie
+        - id: ms-farm
+          uri: lb://ms-farm
+          predicates:
+            - Path=/farm/**
+          filters:
+            - RewritePath=/farm/(?<path>.*), /$\{path}
+            - RemoveRequestHeader= Cookie,Set-Cookie
+        - id: ms-security
+          uri: lb://ms-security
+          predicates:
+            - Path=/security/**
+          filters:
+            - RewritePath=/security/(?<path>.*), /$\{path}
+            - RemoveRequestHeader= Cookie,Set-Cookie
+
+#      globalcors:
+#        add-to-simple-url-handler-mapping: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
